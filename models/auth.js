@@ -28,6 +28,18 @@ const UserSchema = new mongoose.Schema(
       enum: ["user", "owner", "trainer"],
       default: "user",
     },
+    otp: {
+      type: Number,
+      default: 0,
+      required: false,
+      validate: {
+        validator: function (val) {
+          return val.toString().length === 6;
+        },
+        message: (val) => `${val.value} has to be 9 digits`,
+      },
+    },
+    otpExpiration: Date
   },
   {
     timestamps: true,

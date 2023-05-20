@@ -1,9 +1,24 @@
 const statusCode = require("http-status-codes");
 const User = require("../models/auth");
 
+const { generateRandomOtp } = require("./../services/otp-service");
+
 const { BadRequestError, UnauthenticatedError } = require("../errors");
 const register = async (req, res) => {
-  const user = await User.create({ ...req.body });
+  // const isExisting = await User.findOne({
+  //   email: req.body.email
+  // })
+  let otp = generateRandomOtp();
+  let otpExpiration = Date.now() + 10 * 60000;
+
+
+
+
+  const user = await User.create({ ...req.body, otp, otpExpiration });
+  
+  //send email
+  
+
   const token = user.createJWT();
   res.status(statusCode.CREATED).json({
     status: "success",
@@ -42,5 +57,5 @@ const login = async (req, res) => {
 
 module.exports = {
   register,
-  login
+  login,
 };
