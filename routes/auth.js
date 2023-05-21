@@ -8,7 +8,10 @@ const {
   resendOtp,
 } = require("../controllers/auth");
 
-router.post("/register", register);
+const {uploadUserPhoto, resizeUserPhoto} = require('../middleware/multer')
+
+
+router.post("/register", uploadUserPhoto, resizeUserPhoto, register);
 router.post("/login", login);
 router.post("/verify-otp", verifyOtp);
 router.post("/resendOtp", resendOtp);

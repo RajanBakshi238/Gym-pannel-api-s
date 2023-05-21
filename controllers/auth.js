@@ -12,7 +12,14 @@ const register = async (req, res) => {
   let otp = generateRandomOtp();
   let otpExpiration = Date.now() + 10 * 60000;
 
-  const user = await User.create({ ...req.body, otp, otpExpiration });
+  const filteredObj = {
+    ...req.body,
+    otp,
+    otpExpiration,
+    ...(req.file ? { profilePic: req.file.filename } : {}),
+  };
+
+  const user = await User.create(filteredObj);
 
   const _doc = user.toObject();
   delete _doc.otp;
@@ -137,9 +144,8 @@ const resendOtp = async (req, res) => {
 
   res.status(statusCode.OK).json({
     status: "success",
-    message: "OTP sent successfully."
-  })
-
+    message: "OTP sent successfully.",
+  });
 };
 
 module.exports = {
