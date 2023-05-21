@@ -52,6 +52,10 @@ const login = async (req, res) => {
     throw new UnauthenticatedError("Invalid credentials");
   }
 
+  if (!user.isVerified) {
+    throw new BadRequestError("Yet not verified , Please verify first.");
+  }
+
   const token = user.createJWT();
   res.status(statusCode.OK).json({
     user: {
@@ -63,13 +67,13 @@ const login = async (req, res) => {
 };
 
 const verifyOtp = async (req, res) => {
-  const { id, otp } = req.body;
+  const { email, otp } = req.body;
 
-  if (!id || !otp) {
-    throw new BadRequestError("Id and OTP required.");
+  if (!email || !otp) {
+    throw new BadRequestError("Email and OTP required.");
   }
 
-  const exist = await User.findById(id).select("+otp +otpExpiration");
+  const exist = await User.findOne({ email }).select("+otp +otpExpiration");
   // console.log(exist, "??????")
 
   if (!exist) {
@@ -99,8 +103,48 @@ const verifyOtp = async (req, res) => {
   });
 };
 
+const resendOtp = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new BadRequestError("Email Required");
+  }
+
+  const user = await User.findOne({ email }).select("+otp +otpExpiration");
+
+  if (!user) {
+    throw new BadRequestError("User Doesn't exist with the specified email id");
+  }
+
+  if (user.isVerified) {
+    throw new BadRequestError("Account already verified.");
+  }
+
+  let otp = generateRandomOtp();
+  let otpExpiration = Date.now() + 10 * 60000;
+
+  user.otp = otp;
+  user.otpExpiration = otpExpiration;
+
+  await user.save();
+  // await user.save({ validateBeforeSave: false });
+
+  const response = await sendEmail({
+    email: req.body.email,
+    subject: "OTP for verifying account (Valid for 10 min)",
+    message: `Your OTP for account verification is ${otp}. Valid for 10 minutes only`,
+  });
+
+  res.status(statusCode.OK).json({
+    status: "success",
+    message: "OTP sent successfully."
+  })
+
+};
+
 module.exports = {
   register,
   login,
   verifyOtp,
+  resendOtp,
 };
