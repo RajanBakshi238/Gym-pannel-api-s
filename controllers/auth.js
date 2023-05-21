@@ -14,8 +14,11 @@ const register = async (req, res) => {
 
   const user = await User.create({ ...req.body, otp, otpExpiration });
 
-  //send email
+  const _doc = user.toObject();
+  delete _doc.otp;
+  delete _doc.otpExpiration;
 
+  //send email
   const response = await sendEmail({
     email: req.body.email,
     subject: "OTP for verifying account (Valid for 10 min)",
@@ -28,10 +31,9 @@ const register = async (req, res) => {
   res.status(statusCode.CREATED).json({
     status: "success",
     data: {
-      user,
-      
+      ..._doc,
     },
-    message: "User created succesfully",
+    message: "OTP succesfully sent. Please verify your account. ",
   });
 };
 
@@ -60,7 +62,45 @@ const login = async (req, res) => {
   });
 };
 
+const verifyOtp = async (req, res) => {
+  const { id, otp } = req.body;
+
+  if (!id || !otp) {
+    throw new BadRequestError("Id and OTP required.");
+  }
+
+  const exist = await User.findById(id).select("+otp +otpExpiration");
+  // console.log(exist, "??????")
+
+  if (!exist) {
+    throw new BadRequestError("User Doesn't exist.");
+  }
+
+  if (exist.isVerified) {
+    throw new BadRequestError("Account already verified.");
+  }
+
+  if (otp != exist.otp || Date.now() > exist.otpExpiration) {
+    throw new BadRequestError("Invalid Or Expired OTP");
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(exist._id, {
+    $set: { isVerified: true },
+  });
+
+  const token = exist.createJWT();
+  res.status(statusCode.OK).json({
+    user: {
+      ...updatedUser._doc,
+      token,
+    },
+    message: "User verified successfully",
+    status: "success",
+  });
+};
+
 module.exports = {
   register,
   login,
+  verifyOtp,
 };
