@@ -39,7 +39,11 @@ const UserSchema = new mongoose.Schema(
         message: (val) => `${val.value} has to be 9 digits`,
       },
     },
-    otpExpiration: Date
+    otpExpiration: Date,
+    isVerified: {
+      type: Boolean,
+      default: false
+    }
   },
   {
     timestamps: true,

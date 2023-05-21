@@ -2,6 +2,7 @@ const statusCode = require("http-status-codes");
 const User = require("../models/auth");
 
 const { generateRandomOtp } = require("./../services/otp-service");
+const sendEmail = require("./../services/email");
 
 const { BadRequestError, UnauthenticatedError } = require("../errors");
 const register = async (req, res) => {
@@ -11,20 +12,24 @@ const register = async (req, res) => {
   let otp = generateRandomOtp();
   let otpExpiration = Date.now() + 10 * 60000;
 
-
-
-
   const user = await User.create({ ...req.body, otp, otpExpiration });
-  
-  //send email
-  
 
-  const token = user.createJWT();
+  //send email
+
+  const response = await sendEmail({
+    email: req.body.email,
+    subject: "OTP for verifying account (Valid for 10 min)",
+    message: `Your OTP for account verification is ${otp}. Valid for 10 minutes only`,
+  });
+
+  // console.log(response, "response of sended email");
+
+  // const token = user.createJWT();
   res.status(statusCode.CREATED).json({
     status: "success",
     data: {
       user,
-      token,
+      
     },
     message: "User created succesfully",
   });
