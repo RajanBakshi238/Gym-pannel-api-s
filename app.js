@@ -1,6 +1,7 @@
 require("dotenv").config({ path: "./config.env" });
 require("express-async-errors");
 
+const cors = require("cors");
 const path = require("path");
 
 const express = require("express");
@@ -13,6 +14,8 @@ const authRouter = require("./routes/auth");
 
 // error handler
 const errorHandlerMiddleware = require("./middleware/error-handler");
+
+app.use(cors())
 
 app.use(express.json());
 
