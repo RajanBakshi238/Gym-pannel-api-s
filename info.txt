@@ -1,0 +1,32 @@
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: register the user
+ *     tags: [Auth]
+ *     consumes:
+ *      - multipart/form-data
+ *     parameters:
+ *      - in: formData
+ *        name: profilePic
+ *        type: file
+ *        required: true
+ *        description: Profile pic to upload.
+ *      - in: body
+ *        name: name
+ *        type: string
+ *        required: true
+ *        description: Username
+ *      - in: formData
+ *        name: role
+ *        type: string
+ *        required: true
+ *        description: Role
+ *      - in: formData
+ *        name: password
+ *        type: string
+ *        description: Password
+ *     responses:
+ *       200:
+ *         description: Ok
+ */
