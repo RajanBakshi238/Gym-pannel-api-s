@@ -6,6 +6,7 @@ const {
   login,
   verifyOtp,
   resendOtp,
+  googleAuthVerification
 } = require("../controllers/auth");
 
 const { uploadUserPhoto, resizeUserPhoto } = require("../middleware/multer");
@@ -94,6 +95,8 @@ router.post("/register", uploadUserPhoto, resizeUserPhoto, register);
  */
 
 router.post("/login", login);
+
+router.post("/auth-with-mail", googleAuthVerification)
 
 /**
  * @swagger

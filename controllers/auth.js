@@ -1,10 +1,11 @@
 const statusCode = require("http-status-codes");
-const User = require("../models/auth");
+const { OAuth2Client } = require("google-auth-library");
 
+const User = require("../models/auth");
 const { generateRandomOtp } = require("./../services/otp-service");
 const sendEmail = require("./../services/email");
-
 const { BadRequestError, UnauthenticatedError } = require("../errors");
+4;
 const register = async (req, res) => {
   // const isExisting = await User.findOne({
   //   email: req.body.email
@@ -148,9 +149,52 @@ const resendOtp = async (req, res) => {
   });
 };
 
+const googleAuthVerification = async (req, res) => {
+  const { id_token } = req.body;
+  if (!id_token) {
+    throw new BadRequestError("please provide Id Token");
+  }
+  const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+
+  const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+  const ticket = await client.verifyIdToken({
+    idToken: id_token,
+    audience: GOOGLE_CLIENT_ID,
+  });
+
+  const profile = ticket.getPayload();
+
+  // const user = await User.findOne({ email });
+  let existInDB = await User.findOne({ email: profile?.email });
+
+  if (!existInDB) {
+    existInDB = await User.create(
+      [
+        {
+          name: profile?.name,
+          email: profile?.email,
+          isVerified: true,
+          // password:
+        },
+      ],
+      { validateBeforeSave: false }
+    );
+  }
+  // console.log(existInDB, ">>>>>>>>>>>EXIST IN DB", Object.keys(existInDB));
+  res.status(statusCode.OK).json({
+    user: {
+      ...existInDB[0]._doc,
+      token: existInDB[0].createJWT(),
+    },
+
+    status: "success",
+  });
+};
+
 module.exports = {
   register,
   login,
+  googleAuthVerification,
   verifyOtp,
   resendOtp,
 };
